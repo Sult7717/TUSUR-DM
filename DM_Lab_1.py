@@ -300,15 +300,6 @@ print_matrix(matrix)
 inc, edges = incidence_matrix(matrix)
 print_incidence_matrix(inc, edges)
 
-# Вывод списка рёбер
-print("\nСписок рёбер:")
-print_edges(edges)
-
-# Вывод матрицы минимальных путей
-print("\nМатрица путей:")
-path_matrix = find_path(matrix)    
-find_radius_diameter(path_matrix)
-
 
 
 """
