@@ -309,8 +309,7 @@ print("\nМатрица путей:")
 path_matrix = find_path(matrix)    
 find_radius_diameter(path_matrix)
 
-# Визуализация графа
-draw_graph(matrix)
+
 
 """
 написать функцию для возведения матрицы в степень V
