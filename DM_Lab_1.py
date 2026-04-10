@@ -30,6 +30,7 @@ def gen_matrix():
         print(f"Режим графа с петлями")
     else:                        # мультиграф (mode == 4)
         print(f"Режим мультиграфа с мультипетлями")
+
     matrix = [[0] * n for _ in range(n)]
 
     for i in range(n):
@@ -100,13 +101,13 @@ def find_path(matrix):
             for i in range(n):
                 for j in range(n):
                     if output_matrix[i][j] == -1:
-                        output_matrix[i][j] = output_matrix[j][i] = 0
+                        output_matrix[i][j] = output_matrix[j][i] = 0 # можно заменить 0 на float('inf') для корректности
             break
 
     return output_matrix
 
 
-# ---------------- Поиск путей ----------------
+# ---------------- Поиск радиуса и диаметра ----------------
 def find_radius_diameter(matrix):
     n = len(matrix)
 
@@ -121,6 +122,9 @@ def find_radius_diameter(matrix):
         if path_len_arr[i] != 0 and path_len_arr[i] < radius:
             radius = path_len_arr[i]
 
+    central_vertices = [i for i, ecc in enumerate(path_len_arr) if ecc == radius]
+    peripheral_vertices = [i for i, ecc in enumerate(path_len_arr) if ecc == diameter]
+    isolated_verticies = [i for i, ecc in enumerate(path_len_arr) if ecc == 0]
 
 
     print("   ", end="")
@@ -136,7 +140,11 @@ def find_radius_diameter(matrix):
             print(f"{val:3}", end="")
         print(f"{path_len_arr[i]:4}")
 
-    print(f"\nРадиус: {radius}\nДиаметр: {diameter}")
+    print(f"\nРадиус: {radius}")
+    print(f"Диаметр: {diameter}")
+    print(f"Центральные вершины: {central_vertices}")
+    print(f"Периферийные вершины: {peripheral_vertices}")
+    print(f"Изолированные вершины: {isolated_verticies}")
 
     return path_len_arr
         
@@ -275,7 +283,11 @@ def print_edges(data):
     print("До:", "".join(f"{b:<4}" for _, b in data))
     # print(f"Вывод в виде списка:\n{data}")
 
+
+
 # ---------------- main ----------------
+
+# ---------------- Лаба 1 ----------------
 
 # Генерация матрицы смежности
 matrix = gen_matrix()
@@ -304,6 +316,8 @@ print_incidence_matrix(inc, edges)
 print("\nСписок рёбер:")
 print_edges(edges)
 
+# ---------------- Лаба 2 ----------------
+
 # Вывод матрицы минимальных путей
 print("\nМатрица путей:")
 path_matrix = find_path(matrix)    
@@ -311,4 +325,6 @@ find_radius_diameter(path_matrix)
 
 # Визуализация графа
 draw_graph(matrix)
+
+# ---------------- Лаба 3 ----------------
 
