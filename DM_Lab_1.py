@@ -17,8 +17,9 @@ def gen_matrix():
     Возвращает:
         matrix - квадратная матрица смежности, заполненная по правилам
     """
-    n = int(input("Введи размер матрицы n: "))
     mode = int(input(f"Выбери тип генерируемой матрицы смежности:\n1 - Простой,     2 - Полный\n3 - С петлями,   4 - Мультиграф с мультипетлями\n"))
+    if mode not in [1, 2, 3, 4]:
+        n = int(input("Введи размер матрицы n: "))
 
     clear = lambda: os.system('cls')
     clear()
@@ -28,8 +29,10 @@ def gen_matrix():
         print(f"Режим полного графа")
     elif mode == 3:              # граф с петлями
         print(f"Режим графа с петлями")
-    else:                        # мультиграф (mode == 4)
+    elif mode == 4:              # мультиграф (mode == 4)
         print(f"Режим мультиграфа с мультипетлями")
+    else:
+        print(f"Тестовая матрица")
 
     matrix = [[0] * n for _ in range(n)]
 
@@ -41,11 +44,21 @@ def gen_matrix():
                 val = 1 if i != j else 0
             elif mode == 3:              # граф с петлями
                 val = random.randint(0, 1)
-            else:                        # мультиграф (mode == 4)
+            elif mode == 4:              # мультиграф (mode == 4)
                 val = random.randint(0, 3)
+            else:                        # Тестовая матрица
+                matrix = [
+                    [0, 1, 0, 1, 0, 0],
+                    [1, 0, 1, 0, 0, 0],
+                    [0, 1, 0, 1, 0, 0],
+                    [1, 0, 1, 0, 1, 0],
+                    [0, 0, 0, 1, 0, 0],
+                    [0, 0, 0, 0, 0, 0]
+                    ]
 
             # Симметричное заполнение
-            matrix[i][j] = matrix[j][i] = val
+            if mode >= 1 and mode <= 4: 
+                matrix[i][j] = matrix[j][i] = val
 
     return matrix
 
@@ -291,16 +304,6 @@ def print_edges(data):
 
 # Генерация матрицы смежности
 matrix = gen_matrix()
-
-# Тестовая матрица
-# matrix = [
-#     [0, 1, 0, 1, 0, 0],
-#     [1, 0, 1, 0, 0, 0],
-#     [0, 1, 0, 1, 0, 0],
-#     [1, 0, 1, 0, 1, 0],
-#     [0, 0, 0, 1, 0, 0],
-#     [0, 0, 0, 0, 0, 0]
-#     ]
 
 n = len(matrix)
 
