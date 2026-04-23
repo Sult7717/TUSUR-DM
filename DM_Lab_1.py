@@ -4,7 +4,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 # ---------------- Генерация матрицы смежности ----------------
-def gen_matrix():
+def generate_adjacency_matrix():
     """
     Генерирует симметричную матрицу смежности для неориентированного графа.
     Параметры:
@@ -18,7 +18,7 @@ def gen_matrix():
         matrix - квадратная матрица смежности, заполненная по правилам
     """
     mode = int(input(f"Выбери тип генерируемой матрицы смежности:\n1 - Простой,     2 - Полный\n3 - С петлями,   4 - Мультиграф с мультипетлями\n"))
-    if mode in [1, 2, 3, 4]:
+    if mode  in [1, 2, 3, 4]:
         n = int(input("Введи размер матрицы n: "))
 
     clear = lambda: os.system('cls')
@@ -34,31 +34,32 @@ def gen_matrix():
     else:
         print(f"Тестовая матрица")
 
-    matrix = [[0] * n for _ in range(n)]
+    if mode in [1, 2, 3, 4]:
+        matrix = [[0] * n for _ in range(n)]
 
-    for i in range(n):
-        for j in range(i, n):            # заполняем только верхний треугольник (включая диагональ)
-            if mode == 1:                # простой граф
-                val = random.randint(0, 1) if i != j else 0
-            elif mode == 2:              # полный граф
-                val = 1 if i != j else 0
-            elif mode == 3:              # граф с петлями
-                val = random.randint(0, 1)
-            elif mode == 4:              # мультиграф (mode == 4)
-                val = random.randint(0, 3)
-            else:                        # Тестовая матрица
-                matrix = [
-                    [0, 1, 0, 1, 0, 0],
-                    [1, 0, 1, 0, 0, 0],
-                    [0, 1, 0, 1, 0, 0],
-                    [1, 0, 1, 0, 1, 0],
-                    [0, 0, 0, 1, 0, 0],
-                    [0, 0, 0, 0, 0, 0]
-                    ]
+        for i in range(n):
+            for j in range(i, n):            # заполняем только верхний треугольник (включая диагональ)
+                if mode == 1:                # простой граф
+                    val = random.randint(0, 1) if i != j else 0
+                elif mode == 2:              # полный граф
+                    val = 1 if i != j else 0
+                elif mode == 3:              # граф с петлями
+                    val = random.randint(0, 1)
+                elif mode == 4:              # мультиграф (mode == 4)
+                    val = random.randint(0, 3)
 
             # Симметричное заполнение
-            if mode >= 1 and mode <= 4: 
-                matrix[i][j] = matrix[j][i] = val
+            matrix[i][j] = matrix[j][i] = val    
+                    
+    else:   # Тестовая матрица
+        matrix = [
+            [0, 1, 0, 1, 0, 0],
+            [1, 0, 1, 0, 0, 0],
+            [0, 1, 0, 1, 0, 0],
+            [1, 0, 1, 0, 1, 0],
+            [0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0]
+            ]
 
     return matrix
 
@@ -76,7 +77,7 @@ def multiply_matrix(a, b):
 
 
 # ---------------- Поиск путей ----------------
-def find_path(matrix):
+def compute_shortest_paths_matrix(matrix):
     n = len(matrix)
     output_matrix = [[-1] * n for _ in range(n)]
 
@@ -121,7 +122,7 @@ def find_path(matrix):
 
 
 # ---------------- Поиск радиуса и диаметра ----------------
-def find_radius_diameter(matrix):
+def calculate_radius_and_diameter(matrix):
     n = len(matrix)
 
     path_len_arr = []
@@ -162,7 +163,7 @@ def find_radius_diameter(matrix):
     return path_len_arr
         
 # ---------------- Матрица инцидентности ----------------
-def incidence_matrix(matrix):
+def build_incidence_matrix(matrix):
     """
     Строит матрицу инцидентности по матрице смежности.
     Для каждой пары вершин (i,j) с кратностью k > 0 создаётся k рёбер.
@@ -196,7 +197,7 @@ def incidence_matrix(matrix):
 
 
 # ---------------- Визуализация ----------------
-def draw_graph(matrix):
+def visualize_graph(matrix):
     """
     Рисует граф с использованием библиотеки networkx и matplotlib.
     Поддерживаются кратные рёбра (изгибы) и петли.
@@ -256,7 +257,7 @@ def draw_graph(matrix):
 
 
 # ---------------- Отрисовка таблиц матриц ----------------
-def print_matrix(matrix):
+def display_matrix(matrix):
     n = len(matrix)
     k = len(matrix[1])
     print("   ", end="")
@@ -269,7 +270,7 @@ def print_matrix(matrix):
             print(f"{val:3}", end="")
         print()
 
-def print_incidence_matrix(inc, edges):
+def display_incidence_matrix(inc, edges):
     """
     Выводит матрицу инцидентности в удобочитаемом виде.
     Заголовки столбцов: r0, r1, ... (рёбра)
@@ -289,7 +290,7 @@ def print_incidence_matrix(inc, edges):
         row = [f"v{i}"] + [str(inc[i][j]) for j in range(m)]
         print(" ".join(f"{x:>3}" for x in row))
 
-def print_edges(data):
+def display_edges_list(data):
     # print("Вывод в виде таблицы:")
     print("   ", "".join(f"r{i:<3}" for i in range(len(data))))
     print("От:", "".join(f"{a:<4}" for a, _ in data))
@@ -303,31 +304,31 @@ def print_edges(data):
 # ---------------- Лаба 1 ----------------
 
 # Генерация матрицы смежности
-matrix = gen_matrix()
+matrix = generate_adjacency_matrix()
 
 n = len(matrix)
 
 # Вывод матрицы смежности
 print("\nМатрица смежности:")
-print_matrix(matrix)
+display_matrix(matrix)
 
 # Получение матрицы инцидентности и списка рёбер
-inc, edges = incidence_matrix(matrix)
-print_incidence_matrix(inc, edges)
+inc, edges = build_incidence_matrix(matrix)
+display_incidence_matrix(inc, edges)
 
 # Вывод списка рёбер
 print("\nСписок рёбер:")
-print_edges(edges)
+display_edges_list(edges)
 
 # ---------------- Лаба 2 ----------------
 
 # Вывод матрицы минимальных путей
 print("\nМатрица путей:")
-path_matrix = find_path(matrix)    
-find_radius_diameter(path_matrix)
+path_matrix = compute_shortest_paths_matrix(matrix)    
+calculate_radius_and_diameter(path_matrix)
 
 # Визуализация графа
-draw_graph(matrix)
+visualize_graph(matrix)
 
 # ---------------- Лаба 3 ----------------
 
