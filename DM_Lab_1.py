@@ -3,6 +3,8 @@ import random
 import networkx as nx
 import matplotlib.pyplot as plt
 
+# ================ Лабораторная работа 1 ================
+
 # ---------------- Генерация матрицы смежности ----------------
 def generate_adjacency_matrix():
     """
@@ -21,18 +23,18 @@ def generate_adjacency_matrix():
     if mode  in [1, 2, 3, 4]:
         n = int(input("Введи размер матрицы n: "))
 
-    clear = lambda: os.system('cls')
-    clear()
+    # clear = lambda: os.system('cls')
+    # clear()
     if mode == 1:                # простой граф
-        print(f"Режим простого графа")
+        print(f"\nРежим простого графа")
     elif mode == 2:              # полный граф
-        print(f"Режим полного графа")
+        print(f"\nРежим полного графа")
     elif mode == 3:              # граф с петлями
-        print(f"Режим графа с петлями")
+        print(f"\nРежим графа с петлями")
     elif mode == 4:              # мультиграф (mode == 4)
-        print(f"Режим мультиграфа с мультипетлями")
+        print(f"\nРежим мультиграфа с мультипетлями")
     else:
-        print(f"Тестовая матрица")
+        print(f"\nТестовая матрица")
 
     if mode in [1, 2, 3, 4]:
         matrix = [[0] * n for _ in range(n)]
@@ -48,8 +50,8 @@ def generate_adjacency_matrix():
                 elif mode == 4:              # мультиграф (mode == 4)
                     val = random.randint(0, 3)
 
-            # Симметричное заполнение
-            matrix[i][j] = matrix[j][i] = val    
+                # Симметричное заполнение
+                matrix[i][j] = matrix[j][i] = val    
                     
     else:   # Тестовая матрица
         matrix = [
@@ -63,6 +65,165 @@ def generate_adjacency_matrix():
 
     return matrix
 
+# ---------------- Матрица инцидентности ----------------
+def build_incidence_matrix(matrix):
+    """
+    Строит матрицу инцидентности по матрице смежности.
+    Для каждой пары вершин (i,j) с кратностью k > 0 создаётся k рёбер.
+    Если вершина и ребро инцидентны:
+        - для петли ставится 2
+        - для обычного ребра ставится 1
+    Возвращает:
+        inc   - матрица инцидентности (вершины × рёбра)
+        edges - список рёбер в порядке следования столбцов inc
+    """
+    n = len(matrix)
+    edges = []
+
+    # Собираем все рёбра с учётом кратности
+    for i in range(n):
+        for j in range(i, n):
+            for _ in range(matrix[i][j]):
+                edges.append((i, j))
+
+    # Инициализируем матрицу инцидентности нулями
+    inc = [[0] * len(edges) for _ in range(n)]
+
+    # Заполняем инцидентность для каждого ребра
+    for k, (u, v) in enumerate(edges):
+        if u == v:                     # петля
+            inc[u][k] = 2
+        else:                          # обычное ребро
+            inc[u][k] = inc[v][k] = 1
+
+    return inc, edges
+
+# ---------------- Визуализация ----------------
+def visualize_graph(matrix):
+    """
+    Рисует граф с использованием библиотеки networkx и matplotlib.
+    Поддерживаются кратные рёбра (изгибы) и петли.
+    """
+    G = nx.MultiGraph()          # мультиграф для хранения кратных рёбер
+    n = len(matrix)
+
+    # ----------- Лаба 3 -----------
+    ColorDict = { 1: "DodgerBlue", 2: "Crimson", 3: "Gold", 4: "MediumSeaGreen", 5: "DarkOrchid", 6: "Tomato", 7: "DeepSkyBlue", 8: "HotPink", 9: "OrangeRed", 10: "MediumTurquoise" }
+    ColorMatrix = [0 for i in range(n)] # Массив цветов вершин
+
+    # Жадная раскраска вершин
+    for i in range(n):
+        used_colors = set()                             # множество цветов, уже занятых соседями вершины i
+
+        for j in range(n):                              # Перебираем всех соседей вершины i
+            if matrix[i][j] > 0 and i != j and ColorMatrix[j] != 0:
+                used_colors.add(ColorMatrix[j])         # запоминаем цвет соседа
+
+        for color_id in range(1, len(ColorDict)+1):     # Ищем минимальный доступный цвет
+            if ColorDict[color_id] not in used_colors:
+                ColorMatrix[i] = ColorDict[color_id]    # назначаем цвет
+                break                                   # цвет найден, выходим из цикла
+
+    chromatic_number = len(set(ColorMatrix))            # вычисление хроматического числа
+    print(f"Хроматическое число графа: {chromatic_number}")
+    # ----------- Лаба 3 -----------
+
+    G.add_nodes_from(range(n))
+
+    # Добавляем рёбра из матрицы смежности
+    for i in range(n):
+        for j in range(i, n):
+            for _ in range(matrix[i][j]):
+                G.add_edge(i, j)
+
+    # Располагаем вершины с помощью алгоритма spring_layout
+    pos = nx.spring_layout(G)
+
+    # Рисуем вершины и их подписи
+    nx.draw_networkx_nodes(G, pos, node_color=ColorMatrix, node_size=500)
+    nx.draw_networkx_labels(G, pos, font_size=12)
+
+    # Группируем обычные рёбра (не петли) по паре вершин,
+    # чтобы правильно отрисовать кратные рёбра с разным изгибом
+    edges_by_pair = {}
+    for u, v in G.edges():
+        if u != v:
+            pair = tuple(sorted((u, v)))           # упорядоченная пара для неориентированного графа
+            edges_by_pair.setdefault(pair, []).append((u, v))
+
+    # Для каждой пары вершин рисуем рёбра с разными радиусами изгиба
+    for pair, edge_list in edges_by_pair.items():
+        num_edges = len(edge_list)
+        if num_edges == 1:
+            rad_values = [0]                       # прямое ребро
+        else:
+            # Симметричные радиуса изгиба: например, для 2 рёбер [-0.1, 0.1],
+            # для 3: [-0.2, 0, 0.2] и т.д.
+            rad_values = [0.2 * (i - (num_edges - 1) / 2) for i in range(num_edges)]
+
+        for idx, (u, v) in enumerate(edge_list):
+            rad = rad_values[idx]
+            nx.draw_networkx_edges(
+                G, pos, edgelist=[(u, v)],
+                connectionstyle=f'arc3, rad={rad}',
+                edge_color='red', width=2
+            )
+
+    # Петли рисуем стандартным способом (прямые изгибы не поддерживаются)
+    loops = [(u, v) for u, v in G.edges() if u == v]
+    if loops:
+        nx.draw_networkx_edges(G, pos, edgelist=loops,
+                               edge_color='red', width=2)
+
+    plt.axis('off')
+    plt.show()
+
+# ---------------- Отрисовка таблиц матриц ----------------
+def display_matrix(matrix):
+    n = len(matrix)
+    k = len(matrix[1])
+    print("   ", end="")
+    for j in range(k):
+        print(f"{j:3}", end="")
+    print()
+    for i, row in enumerate(matrix):
+        print(f"{i:3}", end="")
+        for val in row:
+            print(f"{val:3}", end="")
+        print()
+
+def display_incidence_matrix(inc, edges):
+    """
+    Выводит матрицу инцидентности в удобочитаемом виде.
+    Заголовки столбцов: r0, r1, ... (рёбра)
+    Заголовки строк: v0, v1, ... (вершины)
+    """
+    n = len(inc)
+    m = len(edges)
+
+    print("\nМатрица инцидентности:")
+
+    # Формируем строку заголовка столбцов
+    header = ["    "] + [f"r{k}" for k in range(m)]
+    print(" ".join(f"{h:>3}" for h in header))
+
+    # Выводим каждую строку с меткой вершины
+    for i in range(n):
+        row = [f"v{i}"] + [str(inc[i][j]) for j in range(m)]
+        print(" ".join(f"{x:>3}" for x in row))
+
+def display_edges_list(data):
+    # print("Вывод в виде таблицы:")
+    print("   ", "".join(f"r{i:<3}" for i in range(len(data))))
+    print("От:", "".join(f"{a:<4}" for a, _ in data))
+    print("До:", "".join(f"{b:<4}" for _, b in data))
+    # print(f"Вывод в виде списка:\n{data}")
+
+
+
+
+
+# ================ Лабораторная работа 2 ================
 
 # ---------------- Перемножение матриц ----------------
 def multiply_matrix(a, b):
@@ -74,7 +235,6 @@ def multiply_matrix(a, b):
             for k in range(n):
                 result[i][j] += a[i][k] * b[k][j]
     return result
-
 
 # ---------------- Поиск путей ----------------
 def compute_shortest_paths_matrix(matrix):
@@ -120,7 +280,6 @@ def compute_shortest_paths_matrix(matrix):
 
     return output_matrix
 
-
 # ---------------- Поиск радиуса и диаметра ----------------
 def calculate_radius_and_diameter(matrix):
     n = len(matrix)
@@ -139,7 +298,6 @@ def calculate_radius_and_diameter(matrix):
     central_vertices = [i for i, ecc in enumerate(path_len_arr) if ecc == radius]
     peripheral_vertices = [i for i, ecc in enumerate(path_len_arr) if ecc == diameter]
     isolated_verticies = [i for i, ecc in enumerate(path_len_arr) if ecc == 0]
-
 
     print("   ", end="")
     for j in range(n):
@@ -162,146 +320,71 @@ def calculate_radius_and_diameter(matrix):
 
     return path_len_arr
         
-# ---------------- Матрица инцидентности ----------------
-def build_incidence_matrix(matrix):
-    """
-    Строит матрицу инцидентности по матрице смежности.
-    Для каждой пары вершин (i,j) с кратностью k > 0 создаётся k рёбер.
-    Если вершина и ребро инцидентны:
-        - для петли ставится 2
-        - для обычного ребра ставится 1
-    Возвращает:
-        inc   - матрица инцидентности (вершины × рёбра)
-        edges - список рёбер в порядке следования столбцов inc
-    """
-    n = len(matrix)
-    edges = []
 
-    # Собираем все рёбра с учётом кратности
+
+
+
+# ================ Лабораторная работа 3 ================
+
+# ---------------- Поиск максимально пустых подграфов ----------------
+def magu_weissman_maximal_independent_sets(adj_matrix):
+    n = len(adj_matrix)
+    all_vertices = set(range(n))
+    
+    # Шаг 1: Формируем начальное выражение (список дизъюнктов для каждого ребра)
+    # Каждый дизъюнкт храним как set номеров вершин.
+    # Фактически это список конъюнктов, которые мы будем перемножать.
+    # Начальное состояние: список пар вершин, образующих ребра
+    clauses = []
     for i in range(n):
-        for j in range(i, n):
-            for _ in range(matrix[i][j]):
-                edges.append((i, j))
+        for j in range(i + 1, n):
+            if adj_matrix[i][j] != 0:
+                clauses.append({i, j})
+                
+    if not clauses:
+        # Если в графе вообще нет ребер, то все вершины независимы
+        return [all_vertices]
 
-    # Инициализируем матрицу инцидентности нулями
-    inc = [[0] * len(edges) for _ in range(n)]
+    # Шаг 2: Перемножение скобок (КНФ -> ДНФ) с поглощением
+    # Начинаем с первого дизъюнкта
+    dnf = [{v} for v in clauses[0]]
+    
+    for clause in clauses[1:]:
+        new_dnf = []
+        # Умножаем текущую ДНФ на новую скобку (clause)
+        for term in dnf:
+            for vertex in clause:
+                # Закон идемпотентности: A * A = A
+                new_term = term.union({vertex})
+                new_dnf.append(new_term)
+        
+        # Закон поглощения: если один терм полностью содержит в себе другой,
+        # то больший терм удаляется (A | (A & B) = A)
+        filtered_dnf = []
+        # Сортируем по размеру, чтобы меньшие элементы поглощали большие
+        new_dnf = sorted(new_dnf, key=len)
+        for term in new_dnf:
+            if not any(existing.issubset(term) for existing in filtered_dnf):
+                filtered_dnf.append(term)
+        dnf = filtered_dnf
 
-    # Заполняем инцидентность для каждого ребра
-    for k, (u, v) in enumerate(edges):
-        if u == v:                     # петля
-            inc[u][k] = 2
-        else:                          # обычное ребро
-            inc[u][k] = inc[v][k] = 1
-
-    return inc, edges
-
-
-# ---------------- Визуализация ----------------
-def visualize_graph(matrix):
-    """
-    Рисует граф с использованием библиотеки networkx и matplotlib.
-    Поддерживаются кратные рёбра (изгибы) и петли.
-    """
-    G = nx.MultiGraph()          # мультиграф для хранения кратных рёбер
-    n = len(matrix)
-
-    G.add_nodes_from(range(n))
-
-    # Добавляем рёбра из матрицы смежности
-    for i in range(n):
-        for j in range(i, n):
-            for _ in range(matrix[i][j]):
-                G.add_edge(i, j)
-
-    # Располагаем вершины с помощью алгоритма spring_layout
-    pos = nx.spring_layout(G)
-
-    # Рисуем вершины и их подписи
-    nx.draw_networkx_nodes(G, pos, node_color='lightblue', node_size=500)
-    nx.draw_networkx_labels(G, pos, font_size=12)
-
-    # Группируем обычные рёбра (не петли) по паре вершин,
-    # чтобы правильно отрисовать кратные рёбра с разным изгибом
-    edges_by_pair = {}
-    for u, v in G.edges():
-        if u != v:
-            pair = tuple(sorted((u, v)))           # упорядоченная пара для неориентированного графа
-            edges_by_pair.setdefault(pair, []).append((u, v))
-
-    # Для каждой пары вершин рисуем рёбра с разными радиусами изгиба
-    for pair, edge_list in edges_by_pair.items():
-        num_edges = len(edge_list)
-        if num_edges == 1:
-            rad_values = [0]                       # прямое ребро
-        else:
-            # Симметричные радиуса изгиба: например, для 2 рёбер [-0.1, 0.1],
-            # для 3: [-0.2, 0, 0.2] и т.д.
-            rad_values = [0.2 * (i - (num_edges - 1) / 2) for i in range(num_edges)]
-
-        for idx, (u, v) in enumerate(edge_list):
-            rad = rad_values[idx]
-            nx.draw_networkx_edges(
-                G, pos, edgelist=[(u, v)],
-                connectionstyle=f'arc3, rad={rad}',
-                edge_color='red', width=2
-            )
-
-    # Петли рисуем стандартным способом (прямые изгибы не поддерживаются)
-    loops = [(u, v) for u, v in G.edges() if u == v]
-    if loops:
-        nx.draw_networkx_edges(G, pos, edgelist=loops,
-                               edge_color='red', width=2)
-
-    plt.axis('off')
-    plt.show()
-
-
-# ---------------- Отрисовка таблиц матриц ----------------
-def display_matrix(matrix):
-    n = len(matrix)
-    k = len(matrix[1])
-    print("   ", end="")
-    for j in range(k):
-        print(f"{j:3}", end="")
-    print()
-    for i, row in enumerate(matrix):
-        print(f"{i:3}", end="")
-        for val in row:
-            print(f"{val:3}", end="")
-        print()
-
-def display_incidence_matrix(inc, edges):
-    """
-    Выводит матрицу инцидентности в удобочитаемом виде.
-    Заголовки столбцов: r0, r1, ... (рёбра)
-    Заголовки строк: v0, v1, ... (вершины)
-    """
-    n = len(inc)
-    m = len(edges)
-
-    print("\nМатрица инцидентности:")
-
-    # Формируем строку заголовка столбцов
-    header = ["    "] + [f"r{k}" for k in range(m)]
-    print(" ".join(f"{h:>3}" for h in header))
-
-    # Выводим каждую строку с меткой вершины
-    for i in range(n):
-        row = [f"v{i}"] + [str(inc[i][j]) for j in range(m)]
-        print(" ".join(f"{x:>3}" for x in row))
-
-def display_edges_list(data):
-    # print("Вывод в виде таблицы:")
-    print("   ", "".join(f"r{i:<3}" for i in range(len(data))))
-    print("От:", "".join(f"{a:<4}" for a, _ in data))
-    print("До:", "".join(f"{b:<4}" for _, b in data))
-    # print(f"Вывод в виде списка:\n{data}")
+    # Шаг 3: Получение независимых множеств
+    # dnf содержит минимальные вершинные покрытия (те вершины, которые надо УДАЛИТЬ).
+    # Чтобы получить максимальные независимые множества, инвертируем их.
+    maximal_independent_sets = []
+    for vertex_cover in dnf:
+        independent_set = all_vertices.difference(vertex_cover)
+        maximal_independent_sets.append(independent_set)
+        
+    return maximal_independent_sets
 
 
 
-# ---------------- main ----------------
 
-# ---------------- Лаба 1 ----------------
+# ================ main ================
+
+# ----------- Лаба 1 -----------
+print("========== Лабораторная работа 1 ==========\n")
 
 # Генерация матрицы смежности
 matrix = generate_adjacency_matrix()
@@ -320,15 +403,25 @@ display_incidence_matrix(inc, edges)
 print("\nСписок рёбер:")
 display_edges_list(edges)
 
-# ---------------- Лаба 2 ----------------
+
+# ----------- Лаба 2 -----------
+print("\n\n========== Лабораторная работа 2 ==========")
 
 # Вывод матрицы минимальных путей
 print("\nМатрица путей:")
 path_matrix = compute_shortest_paths_matrix(matrix)    
 calculate_radius_and_diameter(path_matrix)
 
-# Визуализация графа
+
+# ----------- Лаба 3 -----------
+print("\n\n========== Лабораторная работа 3 ==========")
+
+maximal_sets = magu_weissman_maximal_independent_sets(matrix)
+print("\nВсе максимальные независимые множества:")
+for i, ms in enumerate(maximal_sets, 1):
+    print(f"{i}: {ms}")
+largest_set = max(maximal_sets, key=len)
+print(f"Наибольшее независимое множество: {largest_set} (размер {len(largest_set)})")
+
+# ----------- Визуализация графа -----------
 visualize_graph(matrix)
-
-# ---------------- Лаба 3 ----------------
-
