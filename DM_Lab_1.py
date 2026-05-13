@@ -123,7 +123,8 @@ def visualize_graph(matrix):
                 ColorMatrix[i] = ColorDict[color_id]
                 break
 
-    print(f"Хроматическое число графа: {len(used_colors)+1}\n")
+    chromatic_number = len(set(ColorMatrix))
+    print(f"Хроматическое число графа: {chromatic_number}")
     # ----------- Лаба 3 -----------
 
     G.add_nodes_from(range(n))
