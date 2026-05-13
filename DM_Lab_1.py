@@ -122,6 +122,8 @@ def visualize_graph(matrix):
             if ColorDict[color_id] not in used_colors:
                 ColorMatrix[i] = ColorDict[color_id]
                 break
+
+    print(f"Хроматическое число графа: {len(used_colors)+1}\n")
     # ----------- Лаба 3 -----------
 
     G.add_nodes_from(range(n))
@@ -419,7 +421,7 @@ for i, ms in enumerate(maximal_sets, 1):
 
 # Если требуется наибольшее по размеру (максимальный пустой подграф в смысле числа вершин):
 largest_set = max(maximal_sets, key=len)
-print(f"\nНаибольшее независимое множество: {largest_set} (размер {len(largest_set)})")
+print(f"Наибольшее независимое множество: {largest_set} (размер {len(largest_set)})")
 
 # ----------- Визуализация графа -----------
 visualize_graph(matrix)
