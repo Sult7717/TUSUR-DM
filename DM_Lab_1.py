@@ -23,18 +23,18 @@ def generate_adjacency_matrix():
     if mode  in [1, 2, 3, 4]:
         n = int(input("Введи размер матрицы n: "))
 
-    clear = lambda: os.system('cls')
-    clear()
+    # clear = lambda: os.system('cls')
+    # clear()
     if mode == 1:                # простой граф
-        print(f"Режим простого графа")
+        print(f"\nРежим простого графа")
     elif mode == 2:              # полный граф
-        print(f"Режим полного графа")
+        print(f"\nРежим полного графа")
     elif mode == 3:              # граф с петлями
-        print(f"Режим графа с петлями")
+        print(f"\nРежим графа с петлями")
     elif mode == 4:              # мультиграф (mode == 4)
-        print(f"Режим мультиграфа с мультипетлями")
+        print(f"\nРежим мультиграфа с мультипетлями")
     else:
-        print(f"Тестовая матрица")
+        print(f"\nТестовая матрица")
 
     if mode in [1, 2, 3, 4]:
         matrix = [[0] * n for _ in range(n)]
@@ -50,8 +50,8 @@ def generate_adjacency_matrix():
                 elif mode == 4:              # мультиграф (mode == 4)
                     val = random.randint(0, 3)
 
-            # Симметричное заполнение
-            matrix[i][j] = matrix[j][i] = val    
+                # Симметричное заполнение
+                matrix[i][j] = matrix[j][i] = val    
                     
     else:   # Тестовая матрица
         matrix = [
@@ -303,9 +303,67 @@ def calculate_radius_and_diameter(matrix):
 
 
 
+# ================ Лабораторная работа 3 ================
+
+# ---------------- Поиск максимально пустых подграфов ----------------
+def magu_weissman_maximal_independent_sets(adj_matrix):
+    n = len(adj_matrix)
+    all_vertices = set(range(n))
+    
+    # Шаг 1: Формируем начальное выражение (список дизъюнктов для каждого ребра)
+    # Каждый дизъюнкт храним как set номеров вершин.
+    # Фактически это список конъюнктов, которые мы будем перемножать.
+    # Начальное состояние: список пар вершин, образующих ребра
+    clauses = []
+    for i in range(n):
+        for j in range(i + 1, n):
+            if adj_matrix[i][j] != 0:
+                clauses.append({i, j})
+                
+    if not clauses:
+        # Если в графе вообще нет ребер, то все вершины независимы
+        return [all_vertices]
+
+    # Шаг 2: Перемножение скобок (КНФ -> ДНФ) с поглощением
+    # Начинаем с первого дизъюнкта
+    dnf = [{v} for v in clauses[0]]
+    
+    for clause in clauses[1:]:
+        new_dnf = []
+        # Умножаем текущую ДНФ на новую скобку (clause)
+        for term in dnf:
+            for vertex in clause:
+                # Закон идемпотентности: A * A = A
+                new_term = term.union({vertex})
+                new_dnf.append(new_term)
+        
+        # Закон поглощения: если один терм полностью содержит в себе другой,
+        # то больший терм удаляется (A | (A & B) = A)
+        filtered_dnf = []
+        # Сортируем по размеру, чтобы меньшие элементы поглощали большие
+        new_dnf = sorted(new_dnf, key=len)
+        for term in new_dnf:
+            if not any(existing.issubset(term) for existing in filtered_dnf):
+                filtered_dnf.append(term)
+        dnf = filtered_dnf
+
+    # Шаг 3: Получение независимых множеств
+    # dnf содержит минимальные вершинные покрытия (те вершины, которые надо УДАЛИТЬ).
+    # Чтобы получить максимальные независимые множества, инвертируем их.
+    maximal_independent_sets = []
+    for vertex_cover in dnf:
+        independent_set = all_vertices.difference(vertex_cover)
+        maximal_independent_sets.append(independent_set)
+        
+    return maximal_independent_sets
+
+
+
+
 # ================ main ================
 
 # ----------- Лаба 1 -----------
+print("========== Лабораторная работа 1 ==========\n")
 
 # Генерация матрицы смежности
 matrix = generate_adjacency_matrix()
@@ -326,6 +384,7 @@ display_edges_list(edges)
 
 
 # ----------- Лаба 2 -----------
+print("\n\n========== Лабораторная работа 2 ==========")
 
 # Вывод матрицы минимальных путей
 print("\nМатрица путей:")
@@ -334,8 +393,16 @@ calculate_radius_and_diameter(path_matrix)
 
 
 # ----------- Лаба 3 -----------
+print("\n\n========== Лабораторная работа 3 ==========")
 
+maximal_sets = magu_weissman_maximal_independent_sets(matrix)
+print("\nВсе максимальные независимые множества:")
+for i, ms in enumerate(maximal_sets, 1):
+    print(f"{i}: {ms}")
 
+# Если требуется наибольшее по размеру (максимальный пустой подграф в смысле числа вершин):
+largest_set = max(maximal_sets, key=len)
+print(f"\nНаибольшее независимое множество: {largest_set} (размер {len(largest_set)})")
 
 # ----------- Визуализация графа -----------
 visualize_graph(matrix)
