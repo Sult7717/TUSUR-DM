@@ -3,6 +3,8 @@ import random
 import networkx as nx
 import matplotlib.pyplot as plt
 
+# ================ Лабораторная работа 1 ================
+
 # ---------------- Генерация матрицы смежности ----------------
 def generate_adjacency_matrix():
     """
@@ -63,105 +65,6 @@ def generate_adjacency_matrix():
 
     return matrix
 
-
-# ---------------- Перемножение матриц ----------------
-def multiply_matrix(a, b):
-    n = len(a)
-    result = [[0] * n for _ in range(n)]
-    
-    for i in range(n):
-        for j in range(n):
-            for k in range(n):
-                result[i][j] += a[i][k] * b[k][j]
-    return result
-
-
-# ---------------- Поиск путей ----------------
-def compute_shortest_paths_matrix(matrix):
-    n = len(matrix)
-    output_matrix = [[-1] * n for _ in range(n)]
-
-    # расстояние до самой себя
-    for i in range(n):
-        output_matrix[i][i] = 0
-
-    # Прямые ребра
-    for i in range(n):
-        for j in range(n):
-            if matrix[i][j] > 0:
-                output_matrix[i][j] = 1
-
-    # Текущая степень матрицы смежности
-    current_power = [row[:] for row in matrix] # более глубокое копирование матрицы во избежание проблем
-    path_length = 1
-
-    # Цикл пока есть непомеченные вершины
-    while path_length < n:
-        # Умножаем на исходную матрицу смежности
-        current_power = multiply_matrix(current_power, matrix)
-        path_length += 1
-
-        # Ищем новые пути длины path_length
-        changed = False
-        for i in range(n):
-            for j in range(n):
-                # Если расстояние еще не найдено и есть путь длины path_length
-                if output_matrix[i][j] == -1 and current_power[i][j] > 0:
-                    output_matrix[i][j] = path_length
-                    changed = True
-        
-        # Если на этом шаге не нашли новых путей - заменяем -1 на 0 и выходим
-        if not changed:
-            for i in range(n):
-                for j in range(n):
-                    if output_matrix[i][j] == -1:
-                        output_matrix[i][j] = output_matrix[j][i] = 0 # можно заменить 0 на float('inf') для корректности
-            break
-
-    return output_matrix
-
-
-# ---------------- Поиск радиуса и диаметра ----------------
-def calculate_radius_and_diameter(matrix):
-    n = len(matrix)
-
-    path_len_arr = []
-
-    for i in range(len(matrix)):
-        path_len_arr.append(max(matrix[i]))
-
-    radius = diameter = max(path_len_arr)
-
-    for i in range(len(path_len_arr)):
-        if path_len_arr[i] != 0 and path_len_arr[i] < radius:
-            radius = path_len_arr[i]
-
-    central_vertices = [i for i, ecc in enumerate(path_len_arr) if ecc == radius]
-    peripheral_vertices = [i for i, ecc in enumerate(path_len_arr) if ecc == diameter]
-    isolated_verticies = [i for i, ecc in enumerate(path_len_arr) if ecc == 0]
-
-
-    print("   ", end="")
-    for j in range(n):
-        if j < n:
-            print(f"{j:3}", end="")
-        elif j == n:
-            print(f"max", end="")
-    print("  max")
-    for i, row in enumerate(matrix):
-        print(f"{i:3}", end="")
-        for val in row:
-            print(f"{val:3}", end="")
-        print(f"{path_len_arr[i]:4}")
-
-    print(f"\nРадиус: {radius}")
-    print(f"Диаметр: {diameter}")
-    print(f"Центральные вершины: {central_vertices}")
-    print(f"Периферийные вершины: {peripheral_vertices}")
-    print(f"Изолированные вершины: {isolated_verticies}")
-
-    return path_len_arr
-        
 # ---------------- Матрица инцидентности ----------------
 def build_incidence_matrix(matrix):
     """
@@ -194,7 +97,6 @@ def build_incidence_matrix(matrix):
             inc[u][k] = inc[v][k] = 1
 
     return inc, edges
-
 
 # ---------------- Визуализация ----------------
 def visualize_graph(matrix):
@@ -255,7 +157,6 @@ def visualize_graph(matrix):
     plt.axis('off')
     plt.show()
 
-
 # ---------------- Отрисовка таблиц матриц ----------------
 def display_matrix(matrix):
     n = len(matrix)
@@ -299,9 +200,112 @@ def display_edges_list(data):
 
 
 
-# ---------------- main ----------------
 
-# ---------------- Лаба 1 ----------------
+
+# ================ Лабораторная работа 2 ================
+
+# ---------------- Перемножение матриц ----------------
+def multiply_matrix(a, b):
+    n = len(a)
+    result = [[0] * n for _ in range(n)]
+    
+    for i in range(n):
+        for j in range(n):
+            for k in range(n):
+                result[i][j] += a[i][k] * b[k][j]
+    return result
+
+# ---------------- Поиск путей ----------------
+def compute_shortest_paths_matrix(matrix):
+    n = len(matrix)
+    output_matrix = [[-1] * n for _ in range(n)]
+
+    # расстояние до самой себя
+    for i in range(n):
+        output_matrix[i][i] = 0
+
+    # Прямые ребра
+    for i in range(n):
+        for j in range(n):
+            if matrix[i][j] > 0:
+                output_matrix[i][j] = 1
+
+    # Текущая степень матрицы смежности
+    current_power = [row[:] for row in matrix] # более глубокое копирование матрицы во избежание проблем
+    path_length = 1
+
+    # Цикл пока есть непомеченные вершины
+    while path_length < n:
+        # Умножаем на исходную матрицу смежности
+        current_power = multiply_matrix(current_power, matrix)
+        path_length += 1
+
+        # Ищем новые пути длины path_length
+        changed = False
+        for i in range(n):
+            for j in range(n):
+                # Если расстояние еще не найдено и есть путь длины path_length
+                if output_matrix[i][j] == -1 and current_power[i][j] > 0:
+                    output_matrix[i][j] = path_length
+                    changed = True
+        
+        # Если на этом шаге не нашли новых путей - заменяем -1 на 0 и выходим
+        if not changed:
+            for i in range(n):
+                for j in range(n):
+                    if output_matrix[i][j] == -1:
+                        output_matrix[i][j] = output_matrix[j][i] = 0 # можно заменить 0 на float('inf') для корректности
+            break
+
+    return output_matrix
+
+# ---------------- Поиск радиуса и диаметра ----------------
+def calculate_radius_and_diameter(matrix):
+    n = len(matrix)
+
+    path_len_arr = []
+
+    for i in range(len(matrix)):
+        path_len_arr.append(max(matrix[i]))
+
+    radius = diameter = max(path_len_arr)
+
+    for i in range(len(path_len_arr)):
+        if path_len_arr[i] != 0 and path_len_arr[i] < radius:
+            radius = path_len_arr[i]
+
+    central_vertices = [i for i, ecc in enumerate(path_len_arr) if ecc == radius]
+    peripheral_vertices = [i for i, ecc in enumerate(path_len_arr) if ecc == diameter]
+    isolated_verticies = [i for i, ecc in enumerate(path_len_arr) if ecc == 0]
+
+    print("   ", end="")
+    for j in range(n):
+        if j < n:
+            print(f"{j:3}", end="")
+        elif j == n:
+            print(f"max", end="")
+    print("  max")
+    for i, row in enumerate(matrix):
+        print(f"{i:3}", end="")
+        for val in row:
+            print(f"{val:3}", end="")
+        print(f"{path_len_arr[i]:4}")
+
+    print(f"\nРадиус: {radius}")
+    print(f"Диаметр: {diameter}")
+    print(f"Центральные вершины: {central_vertices}")
+    print(f"Периферийные вершины: {peripheral_vertices}")
+    print(f"Изолированные вершины: {isolated_verticies}")
+
+    return path_len_arr
+        
+
+
+
+
+# ================ main ================
+
+# ----------- Лаба 1 -----------
 
 # Генерация матрицы смежности
 matrix = generate_adjacency_matrix()
@@ -320,15 +324,18 @@ display_incidence_matrix(inc, edges)
 print("\nСписок рёбер:")
 display_edges_list(edges)
 
-# ---------------- Лаба 2 ----------------
+
+# ----------- Лаба 2 -----------
 
 # Вывод матрицы минимальных путей
 print("\nМатрица путей:")
 path_matrix = compute_shortest_paths_matrix(matrix)    
 calculate_radius_and_diameter(path_matrix)
 
-# Визуализация графа
+
+# ----------- Лаба 3 -----------
+
+
+
+# ----------- Визуализация графа -----------
 visualize_graph(matrix)
-
-# ---------------- Лаба 3 ----------------
-
