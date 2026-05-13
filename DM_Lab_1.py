@@ -107,6 +107,23 @@ def visualize_graph(matrix):
     G = nx.MultiGraph()          # мультиграф для хранения кратных рёбер
     n = len(matrix)
 
+    # ----------- Лаба 3 -----------
+    ColorDict = { 1: "DodgerBlue", 2: "Crimson", 3: "Gold", 4: "MediumSeaGreen", 5: "DarkOrchid", 6: "Tomato", 7: "DeepSkyBlue", 8: "HotPink", 9: "OrangeRed", 10: "MediumTurquoise" }
+    ColorMatrix = [0 for i in range(n)]
+
+    for i in range(n):
+        used_colors = set()
+
+        for j in range(n):
+            if matrix[i][j] > 0 and i != j and ColorMatrix[j] != 0:
+                used_colors.add(ColorMatrix[j])
+
+        for color_id in range(1, len(ColorDict)+1):
+            if ColorDict[color_id] not in used_colors:
+                ColorMatrix[i] = ColorDict[color_id]
+                break
+    # ----------- Лаба 3 -----------
+
     G.add_nodes_from(range(n))
 
     # Добавляем рёбра из матрицы смежности
@@ -119,7 +136,7 @@ def visualize_graph(matrix):
     pos = nx.spring_layout(G)
 
     # Рисуем вершины и их подписи
-    nx.draw_networkx_nodes(G, pos, node_color='lightblue', node_size=500)
+    nx.draw_networkx_nodes(G, pos, node_color=ColorMatrix, node_size=500)
     nx.draw_networkx_labels(G, pos, font_size=12)
 
     # Группируем обычные рёбра (не петли) по паре вершин,
