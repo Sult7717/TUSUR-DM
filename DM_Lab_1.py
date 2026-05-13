@@ -109,21 +109,22 @@ def visualize_graph(matrix):
 
     # ----------- Лаба 3 -----------
     ColorDict = { 1: "DodgerBlue", 2: "Crimson", 3: "Gold", 4: "MediumSeaGreen", 5: "DarkOrchid", 6: "Tomato", 7: "DeepSkyBlue", 8: "HotPink", 9: "OrangeRed", 10: "MediumTurquoise" }
-    ColorMatrix = [0 for i in range(n)]
+    ColorMatrix = [0 for i in range(n)] # Массив цветов вершин
 
+    # Жадная раскраска вершин
     for i in range(n):
-        used_colors = set()
+        used_colors = set()                             # множество цветов, уже занятых соседями вершины i
 
-        for j in range(n):
+        for j in range(n):                              # Перебираем всех соседей вершины i
             if matrix[i][j] > 0 and i != j and ColorMatrix[j] != 0:
-                used_colors.add(ColorMatrix[j])
+                used_colors.add(ColorMatrix[j])         # запоминаем цвет соседа
 
-        for color_id in range(1, len(ColorDict)+1):
+        for color_id in range(1, len(ColorDict)+1):     # Ищем минимальный доступный цвет
             if ColorDict[color_id] not in used_colors:
-                ColorMatrix[i] = ColorDict[color_id]
-                break
+                ColorMatrix[i] = ColorDict[color_id]    # назначаем цвет
+                break                                   # цвет найден, выходим из цикла
 
-    chromatic_number = len(set(ColorMatrix))
+    chromatic_number = len(set(ColorMatrix))            # вычисление хроматического числа
     print(f"Хроматическое число графа: {chromatic_number}")
     # ----------- Лаба 3 -----------
 
@@ -419,8 +420,6 @@ maximal_sets = magu_weissman_maximal_independent_sets(matrix)
 print("\nВсе максимальные независимые множества:")
 for i, ms in enumerate(maximal_sets, 1):
     print(f"{i}: {ms}")
-
-# Если требуется наибольшее по размеру (максимальный пустой подграф в смысле числа вершин):
 largest_set = max(maximal_sets, key=len)
 print(f"Наибольшее независимое множество: {largest_set} (размер {len(largest_set)})")
 
