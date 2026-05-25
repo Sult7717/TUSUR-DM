@@ -125,7 +125,7 @@ def visualize_graph(matrix):
                 break                                   # цвет найден, выходим из цикла
 
     chromatic_number = len(set(ColorMatrix))            # вычисление хроматического числа
-    print(f"Хроматическое число графа: {chromatic_number}")
+    print(f"\n\nХроматическое число графа: {chromatic_number}")
     # ----------- Лаба 3 -----------
 
     G.add_nodes_from(range(n))
@@ -326,6 +326,8 @@ def calculate_radius_and_diameter(matrix):
 
 # ================ Лабораторная работа 3 ================
 
+# max_independent_sets = list(nx.find_cliques(nx.complement(Grap)))
+
 # ---------------- Поиск максимально пустых подграфов ----------------
 def magu_weissman_maximal_independent_sets(adj_matrix):
     n = len(adj_matrix)
@@ -381,6 +383,87 @@ def magu_weissman_maximal_independent_sets(adj_matrix):
 
 
 
+# ================ Лабораторная работа 4 ================
+
+def generate_weighted_matrix(matrix, min_weight=1, max_weight=20):
+    """
+    Генерирует матрицу весов на основе матрицы смежности.
+    Параметры:
+        matrix     - квадратная матрица смежности (0 = нет ребра, >0 = есть ребро)
+        min_weight - минимальный вес ребра (включительно)
+        max_weight - максимальный вес ребра (включительно)
+    Возвращает:
+        weight_matrix - матрица, где на месте каждого ребра стоит случайный вес,
+                        остальные элементы = 0. Матрица симметрична.
+    """
+    n = len(matrix)
+    weight_matrix = [[0] * n for _ in range(n)]
+    
+    for i in range(n):
+        for j in range(i, n):
+            if matrix[i][j] != 0:          # ребро существует
+                weight = random.randint(min_weight, max_weight)
+                weight_matrix[i][j] = weight
+                weight_matrix[j][i] = weight
+    return weight_matrix
+
+
+def dijkstra(matrix, start, end):
+    """
+    Алгоритм Дейкстры для графа, заданного матрицей смежности.
+    Параметры:
+        matrix - квадратная матрица смежности (веса рёбер, 0 = нет ребра)
+        start  - индекс начальной вершины (0..n-1)
+        end    - индекс конечной вершины
+    Возвращает:
+        (path, distance) - path: список вершин от start до end,
+                           distance: суммарный вес кратчайшего пути.
+                           Если пути нет, path = [], distance = inf.
+    """
+    n = len(matrix)
+    # Инициализация
+    dist = [float('inf')] * n
+    visited = [False] * n
+    prev = [-1] * n   # для восстановления пути
+
+    dist[start] = 0
+
+    for _ in range(n):
+        # 1. Находим непосещённую вершину с минимальным dist
+        u = -1
+        min_dist = float('inf')
+        for i in range(n):
+            if not visited[i] and dist[i] < min_dist:
+                min_dist = dist[i]
+                u = i
+        if u == -1:          # все оставшиеся вершины недостижимы
+            break
+        visited[u] = True
+
+        # 2. Релаксация всех соседей u
+        for v in range(n):
+            if not visited[v] and matrix[u][v] != 0:
+                weight = matrix[u][v]    # вес ребра (в нашем случае кратность)
+                new_dist = dist[u] + weight
+                if new_dist < dist[v]:
+                    dist[v] = new_dist
+                    prev[v] = u
+
+    # Восстановление пути
+    if dist[end] == float('inf'):
+        return [], float('inf')
+
+    path = []
+    cur = end
+    while cur != -1:
+        path.append(cur)
+        cur = prev[cur]
+    path.reverse()
+    return path, dist[end]
+
+
+
+
 # ================ main ================
 
 # ----------- Лаба 1 -----------
@@ -405,7 +488,7 @@ display_edges_list(edges)
 
 
 # ----------- Лаба 2 -----------
-print("\n\n========== Лабораторная работа 2 ==========")
+print("\n\n\n========== Лабораторная работа 2 ==========")
 
 # Вывод матрицы минимальных путей
 print("\nМатрица путей:")
@@ -414,7 +497,7 @@ calculate_radius_and_diameter(path_matrix)
 
 
 # ----------- Лаба 3 -----------
-print("\n\n========== Лабораторная работа 3 ==========")
+print("\n\n\n========== Лабораторная работа 3 ==========")
 
 maximal_sets = magu_weissman_maximal_independent_sets(matrix)
 print("\nВсе максимальные независимые множества:")
@@ -422,6 +505,26 @@ for i, ms in enumerate(maximal_sets, 1):
     print(f"{i}: {ms}")
 largest_set = max(maximal_sets, key=len)
 print(f"Наибольшее независимое множество: {largest_set} (размер {len(largest_set)})")
+
+
+# ----------- Лаба 4 -----------
+print("\n\n\n========== Лабораторная работа 4 ==========")
+
+# Создаём взвешенную версию графа
+weighted_matrix = generate_weighted_matrix(matrix, min_weight=1, max_weight=5)
+print("\nМатрица весов рёбер:")
+display_matrix(weighted_matrix)
+
+start_vertex = 0
+end_vertex = n-1
+# path, distance = dijkstra(weighted_matrix, start_vertex, end_vertex) # матрица с весом
+path, distance = dijkstra(matrix, start_vertex, end_vertex) # матрица без веса
+if path:
+    print(f"Кратчайший путь из {start_vertex} в {end_vertex}: {path}")
+    print(f"Суммарное расстояние (вес): {distance}")
+else:
+    print(f"Пути из {start_vertex} в {end_vertex} не существует.")
+
 
 # ----------- Визуализация графа -----------
 visualize_graph(matrix)
