@@ -385,17 +385,8 @@ def magu_weissman_maximal_independent_sets(adj_matrix):
 
 # ================ Лабораторная работа 4 ================
 
+# ---------------- Генерация графа с весами ----------------
 def generate_weighted_matrix(matrix, min_weight=1, max_weight=20):
-    """
-    Генерирует матрицу весов на основе матрицы смежности.
-    Параметры:
-        matrix     - квадратная матрица смежности (0 = нет ребра, >0 = есть ребро)
-        min_weight - минимальный вес ребра (включительно)
-        max_weight - максимальный вес ребра (включительно)
-    Возвращает:
-        weight_matrix - матрица, где на месте каждого ребра стоит случайный вес,
-                        остальные элементы = 0. Матрица симметрична.
-    """
     n = len(matrix)
     weight_matrix = [[0] * n for _ in range(n)]
     
@@ -408,6 +399,7 @@ def generate_weighted_matrix(matrix, min_weight=1, max_weight=20):
     return weight_matrix
 
 
+# ---------------- Алгоритм Дейкстры ----------------
 def deikstra(matrix, start, end):
     """
     Алгоритм Дейкстры для графа, заданного матрицей смежности.
@@ -510,22 +502,22 @@ print(f"Наибольшее независимое множество: {largest
 # ----------- Лаба 4 -----------
 print("\n\n\n========== Лабораторная работа 4 ==========")
 
-start_vertex = 0 # начало
-end_vertex = n-1 # конец
+start = 0 # начало
+end = n-1 # конец
 
 # Вариант с взвешенным графом
 # weighted_matrix = generate_weighted_matrix(matrix, min_weight=1, max_weight=5)
 # print("\nМатрица весов рёбер:")
 # display_matrix(weighted_matrix)
-# path, distance = deikstra(weighted_matrix, start_vertex, end_vertex) # матрица с весом
+# path, distance = deikstra(weighted_matrix, start, end) # матрица с весом
 
 # Вариант с графом без веса
-path, distance = deikstra(matrix, start_vertex, end_vertex)
+path, distance = deikstra(matrix, start, end)
 if path:
-    print(f"Кратчайший путь из {start_vertex} в {end_vertex}: {path}")
+    print(f"Кратчайший путь из {start} в {end}: {path}")
     print(f"Суммарное расстояние (вес): {distance}")
 else:
-    print(f"Пути из {start_vertex} в {end_vertex} не существует.")
+    print(f"Пути из {start} в {end} не существует.")
 
 
 # ----------- Визуализация графа -----------
