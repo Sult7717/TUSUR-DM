@@ -510,8 +510,8 @@ print(f"Наибольшее независимое множество: {largest
 # ----------- Лаба 4 -----------
 print("\n\n\n========== Лабораторная работа 4 ==========")
 
-start_vertex = 0
-end_vertex = n-1
+start_vertex = 0 # начало
+end_vertex = n-1 # конец
 
 # Вариант с взвешенным графом
 # weighted_matrix = generate_weighted_matrix(matrix, min_weight=1, max_weight=5)
