@@ -408,7 +408,7 @@ def generate_weighted_matrix(matrix, min_weight=1, max_weight=20):
     return weight_matrix
 
 
-def dijkstra(matrix, start, end):
+def deikstra(matrix, start, end):
     """
     Алгоритм Дейкстры для графа, заданного матрицей смежности.
     Параметры:
@@ -510,15 +510,17 @@ print(f"Наибольшее независимое множество: {largest
 # ----------- Лаба 4 -----------
 print("\n\n\n========== Лабораторная работа 4 ==========")
 
-# Создаём взвешенную версию графа
-weighted_matrix = generate_weighted_matrix(matrix, min_weight=1, max_weight=5)
-print("\nМатрица весов рёбер:")
-display_matrix(weighted_matrix)
-
 start_vertex = 0
 end_vertex = n-1
-# path, distance = dijkstra(weighted_matrix, start_vertex, end_vertex) # матрица с весом
-path, distance = dijkstra(matrix, start_vertex, end_vertex) # матрица без веса
+
+# Вариант с взвешенным графом
+# weighted_matrix = generate_weighted_matrix(matrix, min_weight=1, max_weight=5)
+# print("\nМатрица весов рёбер:")
+# display_matrix(weighted_matrix)
+# path, distance = deikstra(weighted_matrix, start_vertex, end_vertex) # матрица с весом
+
+# Вариант с графом без веса
+path, distance = deikstra(matrix, start_vertex, end_vertex)
 if path:
     print(f"Кратчайший путь из {start_vertex} в {end_vertex}: {path}")
     print(f"Суммарное расстояние (вес): {distance}")
