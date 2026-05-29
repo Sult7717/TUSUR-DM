@@ -101,80 +101,66 @@ def build_incidence_matrix(matrix):
 # ---------------- Визуализация ----------------
 def visualize_graph(matrix):
     """
-    Рисует граф с использованием библиотеки networkx и matplotlib.
+    Рисует граф, используя раскраску через максимальные независимые множества.
     Поддерживаются кратные рёбра (изгибы) и петли.
     """
-    G = nx.MultiGraph()          # мультиграф для хранения кратных рёбер
+    G = nx.MultiGraph()
     n = len(matrix)
-
-    # ----------- Лаба 3 -----------
-    ColorDict = { 1: "DodgerBlue", 2: "Crimson", 3: "Gold", 4: "MediumSeaGreen", 5: "DarkOrchid", 6: "Tomato", 7: "DeepSkyBlue", 8: "HotPink", 9: "OrangeRed", 10: "MediumTurquoise" }
-    ColorMatrix = [0 for i in range(n)] # Массив цветов вершин
-
-    # Жадная раскраска вершин
-    for i in range(n):
-        used_colors = set()                             # множество цветов, уже занятых соседями вершины i
-
-        for j in range(n):                              # Перебираем всех соседей вершины i
-            if matrix[i][j] > 0 and i != j and ColorMatrix[j] != 0:
-                used_colors.add(ColorMatrix[j])         # запоминаем цвет соседа
-
-        for color_id in range(1, len(ColorDict)+1):     # Ищем минимальный доступный цвет
-            if ColorDict[color_id] not in used_colors:
-                ColorMatrix[i] = ColorDict[color_id]    # назначаем цвет
-                break                                   # цвет найден, выходим из цикла
-
-    chromatic_number = len(set(ColorMatrix))            # вычисление хроматического числа
-    print(f"\n\nХроматическое число графа: {chromatic_number}")
-    # ----------- Лаба 3 -----------
-
+    
+    # ----- Раскраска через максимально пустые подграфы -----
+    color_numbers = color_via_maximal_independent_sets(matrix)
+    # Словарь для отображения номеров цветов в красивые названия
+    color_names = {
+        1: "DodgerBlue", 2: "Crimson", 3: "Gold", 4: "MediumSeaGreen",
+        5: "DarkOrchid", 6: "Tomato", 7: "DeepSkyBlue", 8: "HotPink",
+        9: "OrangeRed", 10: "MediumTurquoise"
+    }
+    # Если цветов больше, чем в словаре, добавим серый
+    max_color = max(color_numbers) if color_numbers else 0
+    for i in range(1, max_color + 1):
+        if i not in color_names:
+            color_names[i] = "Gray"
+    
+    ColorMatrix = [color_names[c] for c in color_numbers]
+    chromatic_number = len(set(color_numbers))
+    print(f"\nХроматическое число (по алгоритму МНМ): {chromatic_number}")
+    # ---------------------------------------------
+    
     G.add_nodes_from(range(n))
-
-    # Добавляем рёбра из матрицы смежности
+    # Добавляем кратные рёбра
     for i in range(n):
         for j in range(i, n):
             for _ in range(matrix[i][j]):
                 G.add_edge(i, j)
-
-    # Располагаем вершины с помощью алгоритма spring_layout
+    
     pos = nx.spring_layout(G)
-
-    # Рисуем вершины и их подписи
     nx.draw_networkx_nodes(G, pos, node_color=ColorMatrix, node_size=500)
     nx.draw_networkx_labels(G, pos, font_size=12)
-
-    # Группируем обычные рёбра (не петли) по паре вершин,
-    # чтобы правильно отрисовать кратные рёбра с разным изгибом
+    
+    # Отрисовка кратных рёбер с изгибами
     edges_by_pair = {}
     for u, v in G.edges():
         if u != v:
-            pair = tuple(sorted((u, v)))           # упорядоченная пара для неориентированного графа
+            pair = tuple(sorted((u, v)))
             edges_by_pair.setdefault(pair, []).append((u, v))
-
-    # Для каждой пары вершин рисуем рёбра с разными радиусами изгиба
+    
     for pair, edge_list in edges_by_pair.items():
         num_edges = len(edge_list)
         if num_edges == 1:
-            rad_values = [0]                       # прямое ребро
+            rad_values = [0]
         else:
-            # Симметричные радиуса изгиба: например, для 2 рёбер [-0.1, 0.1],
-            # для 3: [-0.2, 0, 0.2] и т.д.
             rad_values = [0.2 * (i - (num_edges - 1) / 2) for i in range(num_edges)]
-
         for idx, (u, v) in enumerate(edge_list):
             rad = rad_values[idx]
-            nx.draw_networkx_edges(
-                G, pos, edgelist=[(u, v)],
-                connectionstyle=f'arc3, rad={rad}',
-                edge_color='red', width=2
-            )
-
-    # Петли рисуем стандартным способом (прямые изгибы не поддерживаются)
+            nx.draw_networkx_edges(G, pos, edgelist=[(u, v)],
+                                   connectionstyle=f'arc3, rad={rad}',
+                                   edge_color='red', width=2)
+    
+    # Петли
     loops = [(u, v) for u, v in G.edges() if u == v]
     if loops:
-        nx.draw_networkx_edges(G, pos, edgelist=loops,
-                               edge_color='red', width=2)
-
+        nx.draw_networkx_edges(G, pos, edgelist=loops, edge_color='red', width=2)
+    
     plt.axis('off')
     plt.show()
 
@@ -330,55 +316,93 @@ def calculate_radius_and_diameter(matrix):
 
 # ---------------- Поиск максимально пустых подграфов ----------------
 def magu_weissman_maximal_independent_sets(adj_matrix):
+    """Возвращает список всех максимальных независимых множеств (как frozenset или set)."""
     n = len(adj_matrix)
     all_vertices = set(range(n))
     
-    # Шаг 1: Формируем начальное выражение (список дизъюнктов для каждого ребра)
-    # Каждый дизъюнкт храним как set номеров вершин.
-    # Фактически это список конъюнктов, которые мы будем перемножать.
-    # Начальное состояние: список пар вершин, образующих ребра
+    # Шаг 1: строим список дизъюнктов (рёбер) – КНФ
     clauses = []
     for i in range(n):
         for j in range(i + 1, n):
             if adj_matrix[i][j] != 0:
                 clauses.append({i, j})
-                
+    
     if not clauses:
-        # Если в графе вообще нет ребер, то все вершины независимы
+        # Нет рёбер – всё множество независимо
         return [all_vertices]
-
-    # Шаг 2: Перемножение скобок (КНФ -> ДНФ) с поглощением
-    # Начинаем с первого дизъюнкта
+    
+    # Шаг 2: перемножение скобок (КНФ -> ДНФ) с поглощением
+    # Начинаем с первого ребра как набора элементарных конъюнкций (по одному литералу)
     dnf = [{v} for v in clauses[0]]
     
     for clause in clauses[1:]:
         new_dnf = []
-        # Умножаем текущую ДНФ на новую скобку (clause)
         for term in dnf:
-            for vertex in clause:
-                # Закон идемпотентности: A * A = A
-                new_term = term.union({vertex})
+            for v in clause:
+                new_term = term.union({v})
                 new_dnf.append(new_term)
-        
-        # Закон поглощения: если один терм полностью содержит в себе другой,
-        # то больший терм удаляется (A | (A & B) = A)
-        filtered_dnf = []
-        # Сортируем по размеру, чтобы меньшие элементы поглощали большие
-        new_dnf = sorted(new_dnf, key=len)
+        # Поглощение: удаляем термы, содержащие другой терм как подмножество
+        new_dnf.sort(key=len)
+        filtered = []
         for term in new_dnf:
-            if not any(existing.issubset(term) for existing in filtered_dnf):
-                filtered_dnf.append(term)
-        dnf = filtered_dnf
+            if not any(existing.issubset(term) for existing in filtered):
+                filtered.append(term)
+        dnf = filtered
+    
+    # Шаг 3: dnf содержит минимальные вершинные покрытия.
+    # Инвертируем их, чтобы получить максимальные независимые множества.
+    maximal_sets = []
+    for cover in dnf:
+        indep = all_vertices.difference(cover)
+        maximal_sets.append(indep)
+    return maximal_sets
 
-    # Шаг 3: Получение независимых множеств
-    # dnf содержит минимальные вершинные покрытия (те вершины, которые надо УДАЛИТЬ).
-    # Чтобы получить максимальные независимые множества, инвертируем их.
-    maximal_independent_sets = []
-    for vertex_cover in dnf:
-        independent_set = all_vertices.difference(vertex_cover)
-        maximal_independent_sets.append(independent_set)
+
+def color_via_maximal_independent_sets(adj_matrix):
+    """
+    Раскраска вершин через последовательное выделение максимальных независимых множеств.
+    Возвращает список colors, где colors[i] – номер цвета (1, 2, ...) для вершины i.
+    """
+    n = len(adj_matrix)
+    # Преобразуем матрицу в бинарную (0/1), если там были кратности
+    bin_adj = [[1 if adj_matrix[i][j] != 0 else 0 for j in range(n)] for i in range(n)]
+    
+    remaining = set(range(n))        # ещё не окрашенные вершины
+    color_of = [0] * n               # 0 означает «не окрашена»
+    current_color = 1
+    
+    while remaining:
+        # Построим подматрицу для оставшихся вершин
+        # Для удобства перенумеруем оставшиеся вершины индексами 0..k-1
+        rem_list = list(remaining)
+        idx_of = {v: i for i, v in enumerate(rem_list)}   # от исходного индекса к позиции в подграфе
+        k = len(rem_list)
+        sub_adj = [[0] * k for _ in range(k)]
+        for i, u in enumerate(rem_list):
+            for j, v in enumerate(rem_list):
+                if bin_adj[u][v]:
+                    sub_adj[i][j] = 1
         
-    return maximal_independent_sets
+        # Находим все максимальные независимые множества в подграфе
+        all_max_sets = magu_weissman_maximal_independent_sets(sub_adj)
+        if not all_max_sets:
+            # На всякий случай: если множество пусто (не должно быть)
+            break
+        
+        # Берём первое максимальное независимое множество
+        max_set_idx = all_max_sets[0]   # это set индексов в подграфе (0..k-1)
+        # Преобразуем в исходные номера вершин
+        max_set_orig = {rem_list[i] for i in max_set_idx}
+        
+        # Окрашиваем все вершины этого множества в текущий цвет
+        for v in max_set_orig:
+            color_of[v] = current_color
+        
+        # Удаляем окрашенные вершины из рассмотрения
+        remaining -= max_set_orig
+        current_color += 1
+    
+    return color_of
 
 
 
